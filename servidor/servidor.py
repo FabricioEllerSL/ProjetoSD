@@ -5,14 +5,13 @@ def start_server(port, directory):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(("0.0.0.0", port))
     server_socket.listen(5)
-    print(f"Servidor ouvindo na porta {port}...")
+    print(f"[INFO] Servidor ouvindo na porta {port}...")
 
     try:
         while True:
             client_socket, addr = server_socket.accept()
-            print(f"Conexão recebida de {addr}")
+            print(f"[INFO] Conexão recebida de {addr}")
 
-            # Receber nome do arquivo e posição inicial
             request = client_socket.recv(1024).decode()
             filename, start_pos = request.split("::")
             start_pos = int(start_pos)
@@ -22,7 +21,7 @@ def start_server(port, directory):
             if os.path.exists(filepath):
                 client_socket.send(b"OK")
                 with open(filepath, "rb") as f:
-                    f.seek(start_pos)  # Ir para a posição inicial solicitada
+                    f.seek(start_pos)
                     while chunk := f.read(1024):
                         client_socket.send(chunk)
             else:
