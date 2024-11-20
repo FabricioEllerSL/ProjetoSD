@@ -7,21 +7,31 @@ def start_server(port, directory):
     server_socket.listen(5)
     print(f"Servidor ouvindo na porta {port}...")
 
-    while True:
-        client_socket, addr = server_socket.accept()
-        print(f"Conexão recebida de {addr}")
+    try:
+        while True:
+            client_socket, addr = server_socket.accept()
+            print(f"Conexão recebida de {addr}")
 
-        filename = client_socket.recv(1024).decode()
-        filepath = os.path.join(directory, filename)
+            # Receber nome do arquivo e posição inicial
+            request = client_socket.recv(1024).decode()
+            filename, start_pos = request.split("::")
+            start_pos = int(start_pos)
 
-        if os.path.exists(filepath):
-            client_socket.send(b"OK")
-            with open(filepath, "rb") as f:
-                while chunk := f.read(1024):
-                    client_socket.send(chunk)
-        else:
-            client_socket.send(b"NOT_FOUND")
+            filepath = os.path.join(directory, filename)
 
-        client_socket.close()
+            if os.path.exists(filepath):
+                client_socket.send(b"OK")
+                with open(filepath, "rb") as f:
+                    f.seek(start_pos)  # Ir para a posição inicial solicitada
+                    while chunk := f.read(1024):
+                        client_socket.send(chunk)
+            else:
+                client_socket.send(b"NOT_FOUND")
 
-start_server(8081, "replica")
+            client_socket.close()
+    except KeyboardInterrupt:
+        print("\nServidor encerrado pelo usuário.")
+    finally:
+        server_socket.close()
+
+start_server(8081, "servidor")
